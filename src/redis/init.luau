@@ -1,6 +1,11 @@
 return {
     TYPE_STRING = "string",
     TYPE_LIST = "list",
+    TYPE_SET = "set",
+    TYPE_ZSET = "zset",
+    TYPE_HASH = "hash",
+    TYPE_STREAM = "stream",
+    TYPE_NONE = "none",
 	get = function(key: string): string?
 		local result = redis.call("GET", key)
 		if result == false then
