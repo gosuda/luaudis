@@ -1,4 +1,4 @@
-local add = require("./src/add")
+local add = require("./add")
 
 local count = 0
 count += 10 -- compound assign
