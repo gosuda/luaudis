@@ -34,9 +34,9 @@ return {
 	mget = function(keys: { string }): { string | boolean }
 		return redis.call("MGET", table.unpack(keys))
 	end,
-	mset = function(pairs: { [string]: string | number }): string
+	mset = function(input: { [string]: string | number }): string
 		local args = {}
-		for k, v in pairs do
+		for k, v in pairs(input) do
 			table.insert(args, k)
 			table.insert(args, tostring(v))
 		end
