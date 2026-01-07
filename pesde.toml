@@ -1,0 +1,11 @@
+name = "gosuda/luaudis"
+version = "0.1.0"
+authors = ["gosuda"]
+repository = "https://github.com/gosuda/luaudis.git"
+license = "Apache-2.0"
+
+[target]
+environment = "luau"
+
+[indices]
+default = "https://github.com/pesde-pkg/index"

@@ -1,0 +1,12 @@
+{
+  "rules": [
+    "remove_types",
+    "remove_comments",
+    "remove_compound_assignment",
+    "remove_continue",
+    "remove_if_expression",
+    "remove_interpolated_string",
+    "remove_unused_variable",
+    "remove_assertions"
+  ]
+}

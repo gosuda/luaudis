@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  GREETING: Hello, world!
+
+tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building the project..."
+      - darklua process src/init.luau out/init.lua
