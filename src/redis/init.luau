@@ -1,3 +1,5 @@
+local rc = redis.call
+
 return {
     TYPE_STRING = "string",
     TYPE_LIST = "list",
@@ -7,32 +9,32 @@ return {
     TYPE_STREAM = "stream",
     TYPE_NONE = "none",
 	get = function(key: string): string?
-		local result = redis.call("GET", key)
+		local result = rc("GET", key)
 		if result == false then
 			return nil
 		end
 		return result :: string
 	end,
 	set = function(key: string, value: string | number)
-		return redis.call("SET", key, tostring(value))
+		return rc("SET", key, tostring(value))
 	end,
 	setnx = function(key: string, value: string | number): boolean
-		return redis.call("SETNX", key, tostring(value)) == 1
+		return rc("SETNX", key, tostring(value)) == 1
 	end,
 	append = function(key: string, value: string): number
-		return redis.call("APPEND", key, value)
+		return rc("APPEND", key, value)
 	end,
 	strlen = function(key: string): number
-		return redis.call("STRLEN", key)
+		return rc("STRLEN", key)
 	end,
 	getrange = function(key: string, start: number, stop: number): string
-		return redis.call("GETRANGE", key, start, stop)
+		return rc("GETRANGE", key, start, stop)
 	end,
 	setrange = function(key: string, offset: number, value: string): number
-		return redis.call("SETRANGE", key, offset, value)
+		return rc("SETRANGE", key, offset, value)
 	end,
 	mget = function(keys: { string }): { string | boolean }
-		return redis.call("MGET", unpack(keys))
+		return rc("MGET", unpack(keys))
 	end,
 	mset = function(input: { [string]: string | number }): string
 		local args = {}
@@ -40,194 +42,194 @@ return {
 			table.insert(args, k)
 			table.insert(args, tostring(v))
 		end
-		return redis.call("MSET", unpack(args))
+		return rc("MSET", unpack(args))
 	end,
 
 	del = function(key: string): number
-		return redis.call("DEL", key)
+		return rc("DEL", key)
 	end,
 	exists = function(key: string): boolean
-		return redis.call("EXISTS", key) == 1
+		return rc("EXISTS", key) == 1
 	end,
 	incr = function(key: string): number
-		return redis.call("INCR", key)
+		return rc("INCR", key)
 	end,
 	decr = function(key: string): number
-		return redis.call("DECR", key)
+		return rc("DECR", key)
 	end,
 	expire = function(key: string, seconds: number): boolean
-		return redis.call("EXPIRE", key, seconds) == 1
+		return rc("EXPIRE", key, seconds) == 1
 	end,
 	ttl = function(key: string): number
-		return redis.call("TTL", key)
+		return rc("TTL", key)
 	end,
     copy = function(source: string, destination: string): number
-        return redis.call("COPY", source, destination)
+        return rc("COPY", source, destination)
     end,
     type = function(key: string): string
-        return redis.call("TYPE", key)
+        return rc("TYPE", key)
     end,
 
     -- List Commands
     lpush = function(key: string, ...: string | number): number
-        return redis.call("LPUSH", key, ...)
+        return rc("LPUSH", key, ...)
     end,
     rpush = function(key: string, ...: string | number): number
-        return redis.call("RPUSH", key, ...)
+        return rc("RPUSH", key, ...)
     end,
     lpop = function(key: string, count: number?): string | { string } | nil
         if count then
-             local result = redis.call("LPOP", key, count)
+             local result = rc("LPOP", key, count)
              if result == false then return nil end
              return result
         else
-             local result = redis.call("LPOP", key)
+             local result = rc("LPOP", key)
              if result == false then return nil end
              return result :: string
         end
     end,
     rpop = function(key: string, count: number?): string | { string } | nil
         if count then
-             local result = redis.call("RPOP", key, count)
+             local result = rc("RPOP", key, count)
              if result == false then return nil end
              return result
         else
-             local result = redis.call("RPOP", key)
+             local result = rc("RPOP", key)
              if result == false then return nil end
              return result :: string
         end
     end,
     llen = function(key: string): number
-        return redis.call("LLEN", key)
+        return rc("LLEN", key)
     end,
     lrange = function(key: string, start: number, stop: number): { string }
-        return redis.call("LRANGE", key, start, stop)
+        return rc("LRANGE", key, start, stop)
     end,
     lindex = function(key: string, index: number): string?
-        local result = redis.call("LINDEX", key, index)
+        local result = rc("LINDEX", key, index)
         if result == false then return nil end
         return result :: string
     end,
     lrem = function(key: string, count: number, value: string): number
-        return redis.call("LREM", key, count, value)
+        return rc("LREM", key, count, value)
     end,
     lset = function(key: string, index: number, value: string): string
-        return redis.call("LSET", key, index, value)
+        return rc("LSET", key, index, value)
     end,
     ltrim = function(key: string, start: number, stop: number): string
-        return redis.call("LTRIM", key, start, stop)
+        return rc("LTRIM", key, start, stop)
     end,
 
     -- Hash Commands
     hset = function(key: string, field: string, value: string | number): number
-        return redis.call("HSET", key, field, tostring(value))
+        return rc("HSET", key, field, tostring(value))
     end,
     hget = function(key: string, field: string): string?
-        local result = redis.call("HGET", key, field)
+        local result = rc("HGET", key, field)
         if result == false then return nil end
         return result :: string
     end,
     hmget = function(key: string, ...: string): { string | boolean }
-        return redis.call("HMGET", key, ...)
+        return rc("HMGET", key, ...)
     end,
     hdel = function(key: string, ...: string): number
-        return redis.call("HDEL", key, ...)
+        return rc("HDEL", key, ...)
     end,
     hexists = function(key: string, field: string): boolean
-        return redis.call("HEXISTS", key, field) == 1
+        return rc("HEXISTS", key, field) == 1
     end,
     hgetall = function(key: string): { string }
         -- Redis returns list key1, val1, key2, val2...
-        return redis.call("HGETALL", key)
+        return rc("HGETALL", key)
     end,
     hkeys = function(key: string): { string }
-        return redis.call("HKEYS", key)
+        return rc("HKEYS", key)
     end,
     hvals = function(key: string): { string }
-        return redis.call("HVALS", key)
+        return rc("HVALS", key)
     end,
     hlen = function(key: string): number
-        return redis.call("HLEN", key)
+        return rc("HLEN", key)
     end,
     hincrby = function(key: string, field: string, increment: number): number
-        return redis.call("HINCRBY", key, field, increment)
+        return rc("HINCRBY", key, field, increment)
     end,
 
     -- Set Commands
     sadd = function(key: string, ...: string | number): number
-        return redis.call("SADD", key, ...)
+        return rc("SADD", key, ...)
     end,
     srem = function(key: string, ...: string | number): number
-        return redis.call("SREM", key, ...)
+        return rc("SREM", key, ...)
     end,
     smembers = function(key: string): { string }
-        return redis.call("SMEMBERS", key)
+        return rc("SMEMBERS", key)
     end,
     sismember = function(key: string, member: string | number): boolean
-        return redis.call("SISMEMBER", key, member) == 1
+        return rc("SISMEMBER", key, member) == 1
     end,
     scard = function(key: string): number
-        return redis.call("SCARD", key)
+        return rc("SCARD", key)
     end,
     spop = function(key: string, count: number?): string | { string } | nil
         if count then
-             local result = redis.call("SPOP", key, count)
+             local result = rc("SPOP", key, count)
              if result == false then return nil end
              return result
         else
-             local result = redis.call("SPOP", key)
+             local result = rc("SPOP", key)
              if result == false then return nil end
              return result :: string
         end
     end,
     srandmember = function(key: string, count: number?): string | { string } | nil
-        return redis.call("SRANDMEMBER", key, count)
+        return rc("SRANDMEMBER", key, count)
     end,
 
     -- Sorted Set Commands
     zadd = function(key: string, ...: string | number): number
         -- Usage: zadd(key, score1, member1, score2, member2, ...)
-        return redis.call("ZADD", key, ...)
+        return rc("ZADD", key, ...)
     end,
     zrem = function(key: string, ...: string | number): number
-        return redis.call("ZREM", key, ...)
+        return rc("ZREM", key, ...)
     end,
     zscore = function(key: string, member: string | number): number?
-        local result = redis.call("ZSCORE", key, member)
+        local result = rc("ZSCORE", key, member)
         if result == false then return nil end
         return tonumber(result)
     end,
-    zincrby = function(key: string, increment: number, member: string | number): number
-        return tonumber(redis.call("ZINCRBY", key, increment, member))
+    zincrby = function(key: string, increment: number, member: string | number): number?
+        return tonumber(rc("ZINCRBY", key, increment, member))
     end,
     zcard = function(key: string): number
-        return redis.call("ZCARD", key)
+        return rc("ZCARD", key)
     end,
     zrange = function(key: string, start: number, stop: number, withscores: boolean?): { string }
         if withscores then
-             return redis.call("ZRANGE", key, start, stop, "WITHSCORES")
+             return rc("ZRANGE", key, start, stop, "WITHSCORES")
         else
-             return redis.call("ZRANGE", key, start, stop)
+             return rc("ZRANGE", key, start, stop)
         end
     end,
     zrevrange = function(key: string, start: number, stop: number, withscores: boolean?): { string }
         if withscores then
-             return redis.call("ZREVRANGE", key, start, stop, "WITHSCORES")
+             return rc("ZREVRANGE", key, start, stop, "WITHSCORES")
         else
-             return redis.call("ZREVRANGE", key, start, stop)
+             return rc("ZREVRANGE", key, start, stop)
         end
     end,
     zrank = function(key: string, member: string | number): number?
-        local result = redis.call("ZRANK", key, member)
+        local result = rc("ZRANK", key, member)
         if result == false then return nil end
         return result
     end,
     zrevrank = function(key: string, member: string | number): number?
-        local result = redis.call("ZREVRANK", key, member)
+        local result = rc("ZREVRANK", key, member)
         if result == false then return nil end
         return result
     end,
     zcount = function(key: string, min: number | string, max: number | string): number
-        return redis.call("ZCOUNT", key, min, max)
+        return rc("ZCOUNT", key, min, max)
     end,
 }
