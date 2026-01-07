@@ -18,12 +18,15 @@
 
 ## Installation
 
-Clone the repository:
+`luaudis` is designed to be used as a template for your Redis Lua script projects.
 
-```bash
-git clone https://github.com/gosuda/luaudis.git
-cd luaudis
-```
+1.  Click the **"Use this template"** button on GitHub to create a new repository based on `luaudis`.
+2.  Clone your new repository:
+
+    ```bash
+    git clone https://github.com/your-username/your-repo-name.git
+    cd your-repo-name
+    ```
 
 ## Usage
 
