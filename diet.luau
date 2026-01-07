@@ -31,16 +31,19 @@ local function main()
 	print("Detected Redis variable name: " .. redisVar)
 
 	-- 2. 사용된 메서드 찾기
-	local usedMethods = {}
-	-- 메서드 호출 패턴 (점 표기법, 공백 유연성 추가)
-	for method in string.gmatch(content, redisVar .. "%s*%.%s*([%w_]+)") do
-		usedMethods[method] = true
-	end
-    -- 메서드 호출 패턴 (문자열 인덱싱) e.g. redis["get"] - darklua에 의해 변환될 수 있음
-    for method in string.gmatch(content, redisVar .. '%["([%w_]+)"%]') do
+    local usedMethods = {}
+    -- 메서드 호출 탐지 (함수 호출 형태, 테이블 호출 형태 등을 포괄적으로 검사)
+    -- 예: redis.mset(...) or redis.mset{...} or redis.type"..." 
+    -- 정규식: redisVar (공백) . (공백) (메서드명)
+    for method in string.gmatch(content, redisVar .. "%s*%.%s*([%w_]+)") do
         usedMethods[method] = true
     end
-    for method in string.gmatch(content, redisVar .. "%['([%w_]+)'%]") do
+    -- 인덱싱 형태 탐지
+    -- 예: redis["mset"]
+    for method in string.gmatch(content, redisVar .. '%s*%["([%w_]+)"%]') do
+        usedMethods[method] = true
+    end
+    for method in string.gmatch(content, redisVar .. "%s*%['([%w_]+)'%]") do
         usedMethods[method] = true
     end
 
@@ -58,88 +61,103 @@ local function main()
 	local newContent = content
     local removedCount = 0
 
+    -- 간단한 파서 함수: 특정 위치부터 Function Body의 끝(end)을 찾음
+    local function findFunctionEnd(str, startIndex)
+        local len = #str
+        local p = startIndex
+        local balance = 0 
+        
+        while p <= len do
+            -- 문자열/주석 스킵 로직 (간단 구현)
+            local char = string.sub(str, p, p)
+            
+            -- 문자열 ("..." or '...')
+            if char == '"' or char == "'" then
+                 local quote = char
+                 p = p + 1
+                 while p <= len do
+                     local c = string.sub(str, p, p)
+                     if c == "\\" then
+                         p = p + 2 
+                     elseif c == quote then
+                         break 
+                     else
+                         p = p + 1
+                     end
+                 end
+            else
+                -- 키워드 체크
+                local function check(word)
+                    if string.sub(str, p, p + #word - 1) == word then
+                        local nextChar = string.sub(str, p + #word, p + #word)
+                        if string.find(nextChar, "[^%w_]") or nextChar == "" then
+                            return true
+                        end
+                    end
+                    return false
+                end
+
+                if check("function") then
+                    balance = balance + 1
+                    p = p + 7 -- length of 'function' - 1 (loop adds 1)
+                elseif check("if") then
+                    balance = balance + 1
+                    p = p + 1 
+                elseif check("do") then
+                    -- for ... do, while ... do, do ... end
+                    balance = balance + 1
+                    p = p + 1
+                elseif check("repeat") then
+                     -- repeat ... until 구조는 end를 쓰지 않으므로 balance에 영향 X
+                elseif check("end") then
+                    balance = balance - 1
+                    p = p + 2
+                    if balance == 0 then
+                        return p -- Found the closing end
+                    end
+                end
+            end
+            p = p + 1
+        end
+        return nil
+    end
+
 	for _, key in ipairs(knownKeys) do
 		if not usedMethods[key] then
 			-- Case 1: 상수 (key="val",)
-            -- 정규식: key="[^"]-",?
-            -- 주의: 다른 곳 매칭 방지 위해 최대한 안전하게
             local constPattern = key .. '="[^"]-",?'
-            local startConst = string.find(newContent, constPattern)
-            if startConst then
-                newContent = string.gsub(newContent, constPattern, "")
+            local from, to = string.find(newContent, constPattern)
+            if from then
+                newContent = string.sub(newContent, 1, from - 1) .. string.sub(newContent, to + 1)
                 print("Removed constant: " .. key)
                 removedCount = removedCount + 1
             else
                 -- Case 2: 함수 (key=function)
-                local keyFuncStart = string.find(newContent, key .. "=function", 1, true)
+                -- 1. "key=function" 문자열 찾기
+                local keyFuncStr = key .. "=function"
+                local keyFuncStart = string.find(newContent, keyFuncStr, 1, true)
+                
                 if keyFuncStart then
-                    local len = #newContent
-                    local removeEnd = 0
-                    local balance = 0
-                    local p = keyFuncStart
+                    -- 2. function 키워드 뒤의 end 찾기
+                    local funcKeywordPos = keyFuncStart + #key + 1
+                    local endPos = findFunctionEnd(newContent, funcKeywordPos)
                     
-                    -- 간단한 파서
-                    while p <= len do
-                        -- 문자열 스킵
-                        local char = string.sub(newContent, p, p)
-                        if char == '"' or char == "'" then
-                             local quote = char
-                             p = p + 1
-                             while p <= len do
-                                 local c = string.sub(newContent, p, p)
-                                 if c == "\\" then
-                                     p = p + 2 
-                                 elseif c == quote then
-                                     break 
-                                 else
-                                     p = p + 1
-                                 end
-                             end
-                        else
-                            -- 키워드 체크
-                            -- function, if, do 는 balance 증가
-                            -- end 는 balance 감소
-                            -- 단어 경계 체크 필요. generated code는 공백 없을 수 있음.
-                            
-                            local function checkKeyword(word)
-                                if string.sub(newContent, p, p + #word - 1) == word then
-                                    local nextChar = string.sub(newContent, p + #word, p + #word)
-                                    if string.find(nextChar, "[^%w_]") or nextChar == "" then
-                                        return true
-                                    end
-                                end
-                                return false
-                            end
-
-                            if checkKeyword("function") then
-                                balance = balance + 1
-                                p = p + 7 -- skip
-                            elseif checkKeyword("if") then
-                                balance = balance + 1
-                                p = p + 1
-                            elseif checkKeyword("do") then
-                                balance = balance + 1
-                                p = p + 1
-                            elseif checkKeyword("end") then
-                                balance = balance - 1
-                                p = p + 2 -- 'end' is 3 chars, loop adds 1
-                                if balance == 0 then
-                                    -- Found the closing end of the function
-                                    if string.sub(newContent, p + 1, p + 1) == "," then
-                                        p = p + 1
-                                    end
-                                    removeEnd = p
-                                    break
-                                end
-                            end
+                    if endPos then
+                        -- 3. 제거 범위 확장: 뒤따르는 콤마/공백 제거
+                        local removeEnd = endPos
+                        local nextPart = string.sub(newContent, removeEnd + 1)
+                        local _, commaEnd = string.find(nextPart, "^%s*,%s*")
+                        if commaEnd then
+                            removeEnd = removeEnd + commaEnd
                         end
-                        p = p + 1
-                    end
-                    
-                    if removeEnd > 0 then
+                        
+                        -- 실제 제거
                         newContent = string.sub(newContent, 1, keyFuncStart - 1) .. string.sub(newContent, removeEnd + 1)
+                        
                         print("Removed function: " .. key)
                         removedCount = removedCount + 1
+                    else
+                        print("Error: Could not find function end for " .. key)
                     end
                 end
             end
