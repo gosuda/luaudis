@@ -46,23 +46,13 @@ local function main()
 
 	-- 관리할 키 목록
 	local knownKeys = {
-		"TYPE_STRING",
-		"TYPE_LIST",
-		"TYPE_SET",
-		"TYPE_ZSET",
-		"TYPE_HASH",
-		"TYPE_STREAM",
-		"TYPE_NONE",
-		"get",
-		"set",
-		"del",
-		"exists",
-		"incr",
-		"decr",
-		"expire",
-		"ttl",
-		"copy",
-		"type",
+		"TYPE_STRING", "TYPE_LIST", "TYPE_SET", "TYPE_ZSET", "TYPE_HASH", "TYPE_STREAM", "TYPE_NONE",
+		"get", "set", "setnx", "append", "strlen", "getrange", "setrange", "mget", "mset",
+		"del", "exists", "incr", "decr", "expire", "ttl", "copy", "type",
+		"lpush", "rpush", "lpop", "rpop", "llen", "lrange", "lindex", "lrem", "lset", "ltrim",
+		"hset", "hget", "hmget", "hdel", "hexists", "hgetall", "hkeys", "hvals", "hlen", "hincrby",
+		"sadd", "srem", "smembers", "sismember", "scard", "spop", "srandmember",
+		"zadd", "zrem", "zscore", "zincrby", "zcard", "zrange", "zrevrange", "zrank", "zrevrank", "zcount",
 	}
 
 	local newContent = content
