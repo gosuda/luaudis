@@ -11,7 +11,21 @@ tasks:
     cmds:
       - echo "Building the project..."
       - darklua process src/main.luau out/main.lua
-      - darklua minify out/main.lua out/main.min.lua
+      - task: diet
+      - task: minify
+
+  diet:
+    desc: Diet the project
+    cmds:
+      - echo "Dieting the project..."
+      - lune run diet.lua
+
+  minify:
+    desc: Minify the project
+    cmds:
+      - echo "Minifying the project..."
+      - darklua process out/main.lua out/main.min.lua
+      - darklua minify out/main.diet.lua out/main.diet.min.lua
 
   docker:up:
     desc: Start Redis in Docker
@@ -27,12 +41,12 @@ tasks:
   run:
     desc: Run the minified script in Redis
     cmds:
-      - redis-cli --eval out/main.min.lua
+      - redis-cli --eval out/main.diet.min.lua
 
   docker:run:
     desc: Run the minified script in Redis Docker container
     cmds:
-      - docker exec -it luaudis-redis-server redis-cli --eval /data/main.min.lua
+      - docker exec -it luaudis-redis-server redis-cli --eval /data/main.diet.min.lua
 
   start:
     desc: Build and start script
