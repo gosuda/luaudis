@@ -1,3 +1,9 @@
 local redis = require("./redis")
 
-return redis.type("b")
+redis.mset({
+    name = "Alice",
+    age = 30,
+    city = "Wonderland"
+})
+
+return nil
