@@ -12,3 +12,36 @@ tasks:
       - echo "Building the project..."
       - darklua process src/main.luau out/main.lua
       - darklua minify out/main.lua out/main.min.lua
+
+  docker:up:
+    desc: Start Redis in Docker
+    cmds:
+      - docker run --mount type=bind,source=${PWD}/out,target=/data -d --name luaudis-redis-server -p 6379:6379 redis:latest
+
+  docker:down:
+    desc: Stop and remove Redis Docker container
+    cmds:
+      - docker stop luaudis-redis-server
+      - docker rm luaudis-redis-server
+
+  run:
+    desc: Run the minified script in Redis
+    cmds:
+      - redis-cli --eval out/main.min.lua
+
+  docker:run:
+    desc: Run the minified script in Redis Docker container
+    cmds:
+      - docker exec -it luaudis-redis-server redis-cli --eval /data/main.min.lua
+
+  start:
+    desc: Build and start script
+    cmds: 
+      - task: build
+      - task: run
+
+  docker:start:
+    desc: Build and start script in Docker
+    cmds:
+      - task: build
+      - task: docker:run
