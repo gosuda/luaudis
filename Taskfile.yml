@@ -8,7 +8,7 @@ vars:
 tasks:
   build:
     desc: Build the project
-    dir: src
     cmds:
       - echo "Building the project..."
-      - darklua process * '../out'
+      - darklua process src/main.luau out/main.lua
+      - darklua minify out/main.lua out/main.min.lua
