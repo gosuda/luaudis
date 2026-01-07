@@ -32,7 +32,7 @@ return {
 		return redis.call("SETRANGE", key, offset, value)
 	end,
 	mget = function(keys: { string }): { string | boolean }
-		return redis.call("MGET", table.unpack(keys))
+		return redis.call("MGET", unpack(keys))
 	end,
 	mset = function(input: { [string]: string | number }): string
 		local args = {}
@@ -40,7 +40,7 @@ return {
 			table.insert(args, k)
 			table.insert(args, tostring(v))
 		end
-		return redis.call("MSET", table.unpack(args))
+		return redis.call("MSET", unpack(args))
 	end,
 
 	del = function(key: string): number
