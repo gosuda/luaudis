@@ -1,3 +1,3 @@
 local redis = require("./redis")
 
-return redis.get("a")
+return redis.set("b", 123)
